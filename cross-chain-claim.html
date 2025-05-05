@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cross-Chain Token Claim</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <style>
+      body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #1e1e2f;
+          color: #c7c7d1;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+      }
+      .container {
+          background-color: #2a2a3b;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          width: 400px;
+          transition: transform 0.3s ease;
+          margin-bottom: 50px;
+          margin-top: 50px;
+      }
+      .container:hover {
+          transform: translateY(-5px);
+      }
+      h2, h3 {
+          color: #4a90e2;
+          margin-bottom: 15px;
+      }
+      button {
+          background-color: #4a90e2;
+          color: #fff;
+          border: none;
+          padding: 12px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          width: 100%;
+          margin-top: 15px;
+          transition: background-color 0.3s ease;
+      }
+      button:hover {
+          background-color: #357ab8;
+      }
+      .status {
+          margin-top: 20px;
+          padding: 12px;
+          background-color: #333;
+          border-left: 6px solid #4a90e2;
+          border-radius: 5px;
+      }
+      #txDetailsContainer {
+          display: none;
+          flex-direction: column;
+      }
+      .balance-container {
+          margin: 15px 0;
+          padding: 10px;
+          background-color: #333;
+          border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Cross-Chain Token Claim</h2>
+      <button id="connectWallet">Connect Wallet</button>
+      <p>
+        <strong>Connected Address:</strong>
+        <span id="walletAddress">Not connected</span>
+      </p>
+      
+      <div class="balance-container">
+        <h3>Token Balance</h3>
+        <p><strong>Current Network:</strong> <span id="networkName">Not connected</span></p>
+        <p><strong>Balance:</strong> <span id="currentBalance">0</span></p>
+      </div>
+
+      <button id="claimTokens">Cross-Chain Token Claim</button>
+
+      <div class="status">
+        <h3>Status:</h3>
+        <p id="status">Idle</p>
+      </div>
+    </div>
+
+    <div id="wrapper">
+      <div id="txDetailsContainer">
+        <h3>Transaction Details:</h3>
+        <pre id="txDetails">None</pre>
+      </div>
+    </div>
+
+    <script>
+      let provider, signer, claimContract;
+      const claimContractAddress = "0x72d4E756a2E6226Ed3f04F0a75084436d136DE05"; 
+      const merkleProof = [
+        '0x207e9b3a27d6f511b1435223f04a342b8242327840b185060a33cd4753f6bbe1',
+        '0xe646c137f8add887a17dca353ca6b1595c3ff31ac462eb36c5af28ea43ccad74',
+        '0x29de488b4f74c1559e2f6d5605187433a182239b7b9ef18f112cda5e18d0d726',
+        '0xce0c4ecf4de070f1cb15c5c90f33c6df64508b4674dc6c9cbbbf0204547b2426',
+        '0x16c14eddcd847e973b7388a2b747d34f4e8cf3b98f984d6895b2e51a83822139'
+      ];
+      const totalAllocation = ethers.utils.parseEther("100000");
+
+      async function connectWallet() {
+          if (!window.ethereum) {
+              alert("MetaMask is required!");
+              return;
+          }
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          signer = provider.getSigner();
+          const address = await signer.getAddress();
+          document.getElementById("walletAddress").innerText = address;
+          
+          // Update balance immediately after connection
+          await updateBalances();
+          
+          // Set up a listener for account changes
+          window.ethereum.on('accountsChanged', async (accounts) => {
+              if (accounts.length === 0) {
+                  // User disconnected their wallet
+                  document.getElementById("walletAddress").innerText = "Not connected";
+                  document.getElementById("networkName").innerText = "Not connected";
+                  document.getElementById("currentBalance").innerText = "0";
+              } else {
+                  // User switched accounts
+                  document.getElementById("walletAddress").innerText = accounts[0];
+                  await updateBalances();
+              }
+          });
+
+          // Set up a listener for chain changes
+          window.ethereum.on('chainChanged', async () => {
+              await updateBalances();
+          });
+
+          await updateClaimContract();
+      }
+
+      async function updateClaimContract() {
+          const claimAbi = [
+              "function claim(uint256 amount, bytes32[] calldata merkleProof, address receiver) external",
+              "function initialClaim(address account) view returns (bool)",
+              "function balanceOf(address owner) view returns (uint256)",
+              "function claimCrossChain(uint256 totalAllocation, bytes32[] calldata merkleProof, address receiver) external payable",
+              "function quoteSend((uint32, bytes32, uint256, uint256, bytes, bytes, bytes), bool) view returns (uint256 nativeFee, uint256 lzTokenFee)",
+              "function enforcedOptions(uint32, uint16) view returns (bytes)"
+          ];
+
+          claimContract = new ethers.Contract(claimContractAddress, claimAbi, signer);
+      }
+
+      async function updateBalances() {
+          if (!signer) return;
+          
+          try {
+              const provider = new ethers.providers.Web3Provider(window.ethereum);
+              const network = await provider.getNetwork();
+              const address = await signer.getAddress();
+
+              // Get balance for current network
+              const contract = new ethers.Contract(
+                  claimContractAddress,
+                  ["function balanceOf(address owner) view returns (uint256)"],
+                  provider
+              );
+              const balance = await contract.balanceOf(address);
+              document.getElementById("currentBalance").innerText = ethers.utils.formatEther(balance.toString());
+              document.getElementById("networkName").innerText = network.chainId;
+          } catch (error) {
+              console.error("Error fetching balance:", error);
+              document.getElementById("currentBalance").innerText = "Error";
+              document.getElementById("networkName").innerText = network.chainId;
+
+          }
+      }
+
+      document.getElementById("claimTokens").addEventListener("click", async () => {
+          if (!signer) return alert("Connect your wallet first!");
+
+          const targetChainId = 84531; // Base Sepolia
+          const network = await provider.getNetwork();
+            if (network.chainId !== targetChainId) {
+                alert(`Please switch to the correct network (Chain ID: ${targetChainId})`);
+                return;
+            }
+
+          try {
+              const address = await signer.getAddress();
+              document.getElementById("status").innerText = "Preparing claim...";
+
+              // Encode the claim data
+              const claimSelector = claimContract.interface.getSighash("claim");
+              const payload = claimContract.interface.encodeFunctionData("claim", [
+                totalAllocation,
+                merkleProof,
+                address
+                ]);
+
+             console.log("Step 1");
+
+              // Get enforced options
+              const canonicalEid = 40245; // Base Testnet
+              const SEND_AND_CALL = 2;
+              const recipientEncoded = ethers.utils.hexZeroPad(address, 32);
+              const options = await claimContract.enforcedOptions(canonicalEid, SEND_AND_CALL);
+
+              console.log("Step 2");
+
+              // Create send parameters
+              const sendParam = [
+                  canonicalEid,           // dstEid
+                  recipientEncoded,       // to
+                  0,                      // amountLD (number, not string)
+                  0,                      // minAmountLD (number, not string)
+                  options,                // extraOptions
+                  payload,                // composeMsg
+                  "0x"                    // oftCmd
+              ];
+
+              // Log parameters for debugging
+              const logSendParam = [
+                  canonicalEid,           // dstEid
+                  recipientEncoded,       // to
+                  0,                      // amountLD (number, not string)
+                  0,                      // minAmountLD (number, not string)
+                  options,                // extraOptions
+                  payload,                // composeMsg
+                  "0x"                    // oftCmd
+              ];
+
+              console.log({logSendParam});
+
+              console.log("Step 3");  
+
+              // Get messaging fee
+              document.getElementById("status").innerText = "Estimating gas...";
+              const [nativeFee, lzTokenFee] = await claimContract.quoteSend(sendParam, false);
+
+              const messagingFee = [
+                  nativeFee.toString(),
+                  lzTokenFee.toString()
+              ];
+
+           
+
+              console.log("Step 4");
+              console.log("Messaging Fee:", {
+                  nativeFee: ethers.utils.formatEther(nativeFee),
+                  lzTokenFee: ethers.utils.formatEther(lzTokenFee)
+              });
+
+              document.getElementById("txDetails").innerText = JSON.stringify({
+                  logSendParam,
+                  messagingFee,
+                  refundAddress: address,
+                  value: ethers.utils.formatEther(nativeFee.toString())
+              }, null, 4);
+
+              document.getElementById("status").innerText = "Submitting claim...";
+              console.log({totalAllocation, merkleProof, address, nativeFee: nativeFee.toString()});
+
+              console.log("Step 5");
+
+              const tx = await claimContract.claimCrossChain(
+                  totalAllocation,
+                  merkleProof,
+                  address,
+                  { value: nativeFee }
+              );
+
+              console.log("Step 6");
+              
+              document.getElementById("status").innerText = "Transaction pending...";
+              const receipt = await tx.wait();
+
+              document.getElementById("status").innerText = "Claim successful!";
+              
+              // Update balance after successful claim
+              await updateBalances();
+              
+              // Show transaction details
+              document.getElementById("txDetails").innerText = JSON.stringify({
+                  transactionHash: receipt.transactionHash,
+                  blockNumber: receipt.blockNumber,
+                  amount: ethers.utils.formatEther(totalAllocation),
+                  nativeFee: ethers.utils.formatEther(nativeFee),
+                  lzTokenFee: ethers.utils.formatEther(lzTokenFee)
+              }, null, 4);
+              document.getElementById("txDetailsContainer").style.display = 'block';
+
+          } catch (error) {
+              console.error(error);
+              document.getElementById("status").innerText = "Claim failed! " + error.message;
+          }
+      });
+
+      document.getElementById("connectWallet").addEventListener("click", connectWallet);
+    </script>
+  </body>
+</html>
