@@ -99,7 +99,7 @@
 
     <script>
       let provider, signer, claimContract;
-      const claimContractAddress = "0x72d4E756a2E6226Ed3f04F0a75084436d136DE05"; 
+      const claimContractAddress = "0xd1262718810d61a6d313fd783efb9B7a0b322430"; 
       const merkleProof = [
         '0x207e9b3a27d6f511b1435223f04a342b8242327840b185060a33cd4753f6bbe1',
         '0xe646c137f8add887a17dca353ca6b1595c3ff31ac462eb36c5af28ea43ccad74',
@@ -186,16 +186,22 @@
       document.getElementById("claimTokens").addEventListener("click", async () => {
           if (!signer) return alert("Connect your wallet first!");
 
-          const targetChainId = 84531; // Base Sepolia
-          const network = await provider.getNetwork();
-            if (network.chainId !== targetChainId) {
-                alert(`Please switch to the correct network (Chain ID: ${targetChainId})`);
-                return;
-            }
+        //   const targetChainId = 84531; // Base Sepolia
+        //   const network = await provider.getNetwork();
+        //     if (network.chainId !== targetChainId) {
+        //         alert(`Please switch to the correct network (Chain ID: ${targetChainId})`);
+        //         return;
+        //     }
 
           try {
               const address = await signer.getAddress();
               document.getElementById("status").innerText = "Preparing claim...";
+
+              console.log("Step 0");
+              console.log(address, address);
+              console.log(totalAllocation, totalAllocation);
+              console.log(merkleProof, merkleProof);
+
 
               // Encode the claim data
               const claimSelector = claimContract.interface.getSighash("claim");
