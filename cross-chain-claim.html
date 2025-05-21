@@ -195,6 +195,8 @@
 
           try {
               const address = await signer.getAddress();
+              const sourceEid = 40245;
+              
               document.getElementById("status").innerText = "Preparing claim...";
 
               console.log("Step 0");
@@ -202,13 +204,13 @@
               console.log(totalAllocation, totalAllocation);
               console.log(merkleProof, merkleProof);
 
-
               // Encode the claim data
-              const claimSelector = claimContract.interface.getSighash("claim");
-              const payload = claimContract.interface.encodeFunctionData("claim", [
+              const claimSelector = claimContract.interface.getSighash("crossChainClaim");
+              const payload = claimContract.interface.encodeFunctionData("crossChainClaim", [
                 totalAllocation,
                 merkleProof,
-                address
+                address,
+                sourceEid
                 ]);
 
              console.log("Step 1");
@@ -232,18 +234,6 @@
                   "0x"                    // oftCmd
               ];
 
-              // Log parameters for debugging
-              const logSendParam = [
-                  canonicalEid,           // dstEid
-                  recipientEncoded,       // to
-                  0,                      // amountLD (number, not string)
-                  0,                      // minAmountLD (number, not string)
-                  options,                // extraOptions
-                  payload,                // composeMsg
-                  "0x"                    // oftCmd
-              ];
-
-              console.log({logSendParam});
 
               console.log("Step 3");  
 
