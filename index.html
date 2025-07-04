@@ -7,93 +7,277 @@
   <title>LayerZero OFT Transfer</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #1e1e2f;
-      color: #c7c7d1;
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
     }
 
     .container {
-      background-color: #2a2a3b;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      width: 400px;
-      transition: transform 0.3s ease;
-      margin-bottom: 50px;
-      margin-top: 50px;
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 480px;
     }
 
-    .container:hover {
-      transform: translateY(-5px);
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 30px;
+      font-size: 24px;
+      font-weight: 600;
+      text-align: center;
     }
 
-    h2,
     h3 {
-      color: #4a90e2;
-      margin-bottom: 15px;
+      color: #2c3e50;
+      margin: 25px 0 15px 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 8px 0;
+      color: #555;
+    }
+
+    strong {
+      color: #2c3e50;
+      font-weight: 500;
     }
 
     label {
       display: block;
-      margin-top: 15px;
-      font-weight: bold;
-      color: #9fa3b0;
+      margin: 20px 0 8px 0;
+      font-weight: 500;
+      color: #2c3e50;
+      font-size: 14px;
     }
 
     input[type="text"],
     input[type="number"],
     select {
       width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #444;
-      border-radius: 5px;
-      background-color: #1e1e2f;
-      color: #c7c7d1;
+      padding: 12px 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+      color: #333;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    input::placeholder {
+      color: #999;
     }
 
     button {
-      background-color: #4a90e2;
-      color: #fff;
+      background: #3498db;
+      color: white;
       border: none;
-      padding: 12px 20px;
-      border-radius: 5px;
+      padding: 14px 24px;
+      border-radius: 6px;
       cursor: pointer;
       width: 100%;
-      margin-top: 15px;
-      transition: background-color 0.3s ease;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+      margin-top: 20px;
     }
 
     button:hover {
-      background-color: #357ab8;
+      background: #2980b9;
     }
 
-    p,
-    pre {
-      margin: 10px 0;
+    button:active {
+      transform: translateY(1px);
     }
 
     .status {
-      margin-top: 20px;
-      padding: 12px;
-      background-color: #333;
-      border-left: 6px solid #4a90e2;
-      border-radius: 5px;
+      margin-top: 25px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-left: 4px solid #3498db;
+      border-radius: 4px;
+    }
+
+    .status h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+
+    .status p {
+      margin: 0;
+      color: #555;
     }
 
     #txDetailsContainer {
       display: none;
-      /* Initially hidden */
-      flex-direction: column;
-      /* Use flex-direction if needed */
+      margin-top: 20px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #eee;
+    }
+
+    pre {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      color: #555;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 30px 20px;
+      }
+      
+      h2 {
+        font-size: 20px;
+      }
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: auto;
+      padding: 0;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      background: #3498db;
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      color: white;
+    }
+
+    .close {
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .close:hover {
+      opacity: 0.7;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .param-section h4 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+
+    .param-section code {
+      background: #ecf0f1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+    }
+
+    .param-group {
+      margin-bottom: 20px;
+    }
+
+    .param-group h5 {
+      color: #34495e;
+      margin-bottom: 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .param-item {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .param-name {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .param-value {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      color: #555;
+      word-break: break-all;
+      background: white;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+
+    .param-description {
+      font-size: 11px;
+      color: #7f8c8d;
+      margin-top: 4px;
+      font-style: italic;
     }
   </style>
 </head>
@@ -112,16 +296,22 @@
     <p><strong>OFT Balance:</strong> <span id="balance">0</span></p>
 
     <h3>Send Tokens</h3>
+    <label>Network Mode:</label>
+    <select id="networkMode">
+      <option value="testnet">Testnet</option>
+      <option value="mainnet">Mainnet</option>
+    </select>
     <label>Recipient Address:</label>
     <input type="text" id="recipient" placeholder="0xRecipientAddress" />
     <label>Amount:</label>
     <input type="number" id="amount" placeholder="Enter amount" />
     <label>Destination Chain:</label>
     <select id="destinationChain">
-      <option value="40245">Base Testnet</option>
-      <option value="40287">Linea Testnet</option>
+      <option value="40287">Base Testnet</option>
+      <option value="40245">Linea Testnet</option>
     </select>
     <button id="sendTokens">Send</button>
+    <button id="showParams" style="margin-top: 10px; background: #95a5a6;">Show Transaction Parameters</button>
 
     <div class="status">
       <h3>Status:</h3>
@@ -129,15 +319,33 @@
     </div>
   </div>
 
-  <div id="wrapper">
-    <div id="txDetailsContainer">
-      <h3>Transaction Details:</h3>
-      <pre id="txDetails">None</pre>
+  <!-- Modal -->
+  <div id="paramsModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Transaction Parameters</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="param-section">
+          <h4>Method: <code>send</code></h4>
+          <div class="param-group">
+            <h5>Parameters:</h5>
+            <div id="sendParams"></div>
+          </div>
+          <div class="param-group">
+            <h5>Overrides:</h5>
+            <div id="sendOverrides"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
     let provider, signer, oftContract;
+    
+    // Original working configuration
     const oftContracts = {
       84532: "0x076cAaF62A40B8f8bB12c118cB8C346a1c9B0f2f", // Base Testnet
       59141: "0x076cAaF62A40B8f8bB12c118cB8C346a1c9B0f2f"  // Linea Testnet
@@ -147,6 +355,110 @@
       84532: 40287, // Base Testnet --> Linea Testnet
       59141: 40245  // Linea Testnet --> Base Testnet
     };
+
+    // Chain data for both testnet and mainnet (for network mode toggle)
+    const chainData = {
+      testnet: {
+        contracts: {
+          84532: "0x076cAaF62A40B8f8bB12c118cB8C346a1c9B0f2f", // Base Testnet
+          59141: "0x076cAaF62A40B8f8bB12c118cB8C346a1c9B0f2f"  // Linea Testnet
+        },
+        eids: {
+          84532: 40287, // Base Testnet --> Linea Testnet
+          59141: 40245  // Linea Testnet --> Base Testnet
+        },
+        destinations: [
+          { value: "40245", text: "Base Testnet" },
+          { value: "40287", text: "Linea Testnet" }
+        ]
+      },
+      mainnet: {
+        contracts: {
+          8453: "0x4DEC3139f4A6c638E26452d32181fe87A7530805", // Base Mainnet
+          56: "0x4DEC3139f4A6c638E26452d32181fe87A7530805"   // BNB Chain Mainnet
+        },
+        eids: {
+          8453: 30102, // Base Mainnet -> BNB Chain Mainnet EID
+          56: 30184   // BNB Chain Mainnet -> Base Mainnet EID
+        },
+        destinations: [
+          { value: "30184", text: "Base Mainnet" },
+          { value: "30102", text: "BNB Chain Mainnet" }
+        ]
+      }
+    };
+
+    let currentNetworkMode = 'testnet';
+    let currentOftContracts = oftContracts;
+    let currentEids = eids;
+
+    function updateDestinationChains() {
+      const destinationSelect = document.getElementById("destinationChain");
+      const currentMode = document.getElementById("networkMode").value;
+      
+      // Clear existing options
+      destinationSelect.innerHTML = '';
+      
+      // Get current chain ID if wallet is connected
+      let currentChainId = null;
+      if (signer && provider) {
+        provider.getNetwork().then(network => {
+          currentChainId = network.chainId;
+          populateDestinationChains(currentChainId);
+        }).catch(() => {
+          populateDestinationChains(null);
+        });
+      } else {
+        populateDestinationChains(null);
+      }
+      
+      function populateDestinationChains(currentChainId) {
+        // Clear existing options again (in case async)
+        destinationSelect.innerHTML = '';
+        
+        // Add new options based on selected mode, excluding current chain
+        chainData[currentMode].destinations.forEach(dest => {
+          if (parseInt(dest.value) !== currentChainId) {
+            const option = document.createElement("option");
+            option.value = dest.value;
+            option.textContent = dest.text;
+            destinationSelect.appendChild(option);
+          }
+        });
+        
+        // If no options available (user is on the only supported chain), show a message
+        if (destinationSelect.options.length === 0) {
+          const option = document.createElement("option");
+          option.value = "";
+          option.textContent = "No other chains available";
+          option.disabled = true;
+          destinationSelect.appendChild(option);
+        }
+      }
+      
+      // Update global variables
+      currentNetworkMode = currentMode;
+      currentOftContracts = chainData[currentMode].contracts;
+      currentEids = chainData[currentMode].eids;
+      
+      // Clear current state
+      document.getElementById("walletAddress").innerText = "Not connected";
+      document.getElementById("oftChainId").innerText = "Not connected";
+      document.getElementById("balance").innerText = "0";
+      document.getElementById("status").innerText = "Idle";
+      
+      // Clear form fields
+      document.getElementById("recipient").value = "";
+      document.getElementById("amount").value = "";
+      
+      // Reset contract
+      oftContract = null;
+      
+      // If wallet is connected, re-run the contract update logic
+      if (signer) {
+        updateOFTContract();
+      }
+    }
 
     async function connectWallet() {
       if (!window.ethereum) {
@@ -164,7 +476,7 @@
     async function updateOFTContract() {
       const network = await provider.getNetwork();
       const chainId = network.chainId;
-      const oftAddress = oftContracts[chainId];
+      const oftAddress = currentOftContracts[chainId];
 
       if (!oftAddress) {
         alert("Unsupported network! Switch to Base, or Linea testnets.");
@@ -190,13 +502,11 @@
       document.getElementById("balance").innerText = ethers.utils.formatEther(balance);
     }
 
-
-
     document.getElementById("sendTokens").addEventListener("click", async () => {
       if (!signer) return alert("Connect your wallet first!");
       const network = await provider.getNetwork();
       const chainId = network.chainId;
-      const oftAddress = oftContracts[chainId];
+      const oftAddress = currentOftContracts[chainId];
 
       if (!oftAddress) {
         alert("Unsupported network! Please switch to Base, or Linea testnets.");
@@ -215,11 +525,10 @@
       const recipientEncoded = ethers.utils.hexZeroPad(recipient, 32);
 
       const msgType = 1;
-      const destinationEid = eids[chainId];
+      const destinationEid = currentEids[chainId];
       const options = await oftContract.enforcedOptions(destinationEid, msgType);
 
       document.getElementById("status").innerText = "Estimating gas...";
-
 
       try {
         const sendParam = [
@@ -261,16 +570,6 @@
           }, null, 4)
         )
 
-        //   document.getElementById("txDetails").innerText = JSON.stringify({
-        //       logSendParam,
-        //       messagingFee,
-        //       refundAddress,
-        //       value: ethers.utils.formatEther(nativeFee.toString())
-        //   }, null, 4);
-
-        // Show the transaction details container
-        //   document.getElementById("txDetailsContainer").style.display = 'block';
-
         const tx = await oftContract.send(
           sendParam,
           messagingFee,
@@ -287,7 +586,6 @@
 
         console.log(`https://testnet.layerzeroscan.com/tx/${receipt.transactionHash}`);
 
-
         document.getElementById("status").innerText = "Transfer successful!";
         await updateBalance();
       } catch (error) {
@@ -297,6 +595,126 @@
     });
 
     document.getElementById("connectWallet").addEventListener("click", connectWallet);
+    
+    // Add event listener for network mode changes
+    document.getElementById("networkMode").addEventListener("change", updateDestinationChains);
+    
+    // Initialize destination chains on page load
+    updateDestinationChains();
+
+    // Modal functionality
+    const modal = document.getElementById("paramsModal");
+    const showParamsBtn = document.getElementById("showParams");
+    const closeBtn = document.querySelector(".close");
+
+    showParamsBtn.addEventListener("click", showTransactionParams);
+    closeBtn.addEventListener("click", closeModal);
+
+    // Close modal when clicking outside
+    window.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    async function showTransactionParams() {
+      if (!signer) {
+        alert("Please connect your wallet first!");
+        return;
+      }
+
+      // Get current form values
+      const recipient = document.getElementById("recipient").value;
+      const amount = document.getElementById("amount").value;
+      const destinationChainId = document.getElementById("destinationChain").value;
+
+      if (!recipient || !amount || !destinationChainId) {
+        alert("Please fill in all form fields first!");
+        return;
+      }
+
+      if (!ethers.utils.isAddress(recipient)) {
+        alert("Invalid recipient address!");
+        return;
+      }
+
+      if (!amount || isNaN(amount)) {
+        alert("Invalid amount!");
+        return;
+      }
+
+      // Generate parameters (similar to send function but without executing)
+      const amountWei = ethers.utils.parseEther(amount);
+      const recipientEncoded = ethers.utils.hexZeroPad(recipient, 32);
+      const msgType = 1;
+      const network = await provider.getNetwork();
+      const chainId = network.chainId;
+      const destinationEid = currentEids[chainId];
+
+      // Create parameter display
+      const sendParamsDiv = document.getElementById("sendParams");
+      const sendOverridesDiv = document.getElementById("sendOverrides");
+
+      // Parameters array
+      const sendParam = [
+        parseInt(destinationChainId),
+        recipientEncoded,
+        amountWei,
+        amountWei,
+        "0x", // options (will be filled by contract)
+        "0x", // composeMsg
+        "0x"  // oftCmd
+      ];
+
+      const paramNames = [
+        "dstEid",
+        "to",
+        "amountLD", 
+        "minAmountLD",
+        "extraOptions",
+        "composeMsg",
+        "oftCmd"
+      ];
+
+      const paramDescriptions = [
+        "Destination chain endpoint ID",
+        "Recipient address (encoded)",
+        "Amount to send (in wei)",
+        "Minimum amount to receive (in wei)",
+        "Extra options for the transfer",
+        "Compose message (empty for basic transfer)",
+        "OFT command (empty for basic transfer)"
+      ];
+
+      // Display parameters
+      sendParamsDiv.innerHTML = '';
+      sendParam.forEach((param, index) => {
+        const paramItem = document.createElement("div");
+        paramItem.className = "param-item";
+        paramItem.innerHTML = `
+          <div class="param-name">${paramNames[index]}</div>
+          <div class="param-value">${param}</div>
+          <div class="param-description">${paramDescriptions[index]}</div>
+        `;
+        sendParamsDiv.appendChild(paramItem);
+      });
+
+      // Display overrides
+      sendOverridesDiv.innerHTML = `
+        <div class="param-item">
+          <div class="param-name">value</div>
+          <div class="param-value">Estimated fee (will be calculated)</div>
+          <div class="param-description">Native token amount to pay for gas and fees</div>
+        </div>
+      `;
+
+      // Show modal
+      modal.style.display = "flex";
+    }
   </script>
 </body>
 
