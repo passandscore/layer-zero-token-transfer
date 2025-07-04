@@ -20,18 +20,16 @@
       line-height: 1.6;
       padding: 20px;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
     }
 
     .container {
       background: white;
-      padding: 40px;
+      padding: 10px 40px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       width: 100%;
       max-width: 480px;
+      margin: 0 auto;
     }
 
     h2 {
@@ -283,8 +281,36 @@
 </head>
 
 <body>
+  <div class="help-section" style="background: #f8f9fa; padding: 20px; margin-bottom: 20px; border-bottom: 1px solid #e9ecef; width: 100%;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <h4 style="font-size: 20px; margin: 0 0 15px 0; color: #2c3e50; text-align: center;">ArtToken Cross-Chain Transfer</h4>
+      <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1; min-width: 300px;">
+          <h5 style="margin: 0 0 10px 0; color: #34495e;">Testnet Contracts:</h5>
+          <p style="margin: 5px 0; font-size: 14px; color: #555;">
+            • Base Testnet (84532): <code style="background: #ecf0f1; padding: 2px 4px; border-radius: 3px;">0x076cAaF62A40B8f8bB12c118cB8C346a1c9B0f2f</code>
+          </p>
+          <p style="margin: 5px 0; font-size: 14px; color: #555;">
+            • Linea Testnet (59141): <code style="background: #ecf0f1; padding: 2px 4px; border-radius: 3px;">0x076cAaF62A40B8f8bB12c118cB8C346a1c9B0f2f</code>
+          </p>
+        </div>
+        <div style="flex: 1; min-width: 300px;">
+          <h5 style="margin: 0 0 10px 0; color: #34495e;">Mainnet Contracts:</h5>
+          <p style="margin: 5px 0; font-size: 14px; color: #555;">
+            • Base Mainnet (8453): <code style="background: #ecf0f1; padding: 2px 4px; border-radius: 3px;">0x4DEC3139f4A6c638E26452d32181fe87A7530805</code>
+          </p>
+          <p style="margin: 5px 0; font-size: 14px; color: #555;">
+            • BNB Chain Mainnet (56): <code style="background: #ecf0f1; padding: 2px 4px; border-radius: 3px;">0x4DEC3139f4A6c638E26452d32181fe87A7530805</code>
+          </p>
+        </div>
+      </div>
+      <p style="margin: 15px 0 0 0; font-size: 14px; color: #7f8c8d; text-align: center; font-style: italic;">
+        Transfer ArtToken between supported networks using LayerZero's OFT protocol.
+      </p>
+    </div>
+  </div>
+
   <div class="container">
-    <h2>LayerZero OFT Transfer</h2>
     <button id="connectWallet">Connect Wallet</button>
     <p>
       <strong>Connected Address:</strong>
